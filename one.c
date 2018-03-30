@@ -6,7 +6,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
-#include <asm/uaccess.h>
+//#include <asm/uaccess.h>
 
 #define MAJOR_NUMBER 61
 
@@ -47,9 +47,12 @@ ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t 
 /*please complete the function on your own*/
 }
 
+static char *who = "default";
+module_param(who, charp, S_IRUGO);
 static int onebyte_init(void)
 {
 	int result;
+	printk(KERN_ALERT "Hello %s\n", who);
 	// register the device
 	result = register_chrdev(MAJOR_NUMBER, "onebyte", &onebyte_fops);
 	if (result < 0) {
