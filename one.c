@@ -6,7 +6,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #define MAJOR_NUMBER 61
 
@@ -20,7 +20,7 @@ static void onebyte_exit(void);
 /* definition of file_operation structure */
 struct file_operations onebyte_fops = {
 	read: onebyte_read,
-	//write: onebyte_write,
+	write: onebyte_write,
 	open: onebyte_open,
 	release: onebyte_release
 };
@@ -39,26 +39,32 @@ int onebyte_release(struct inode *inode, struct file *filep)
 
 ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
-	ssize_t bytes = 0;
-	printk(KERN_ALERT "called onebyte_read");
-	if (count) {
-		copy_to_user(buf, onebyte_data, 1);
-		++bytes;
-	}
-	return bytes;
+	printk(KERN_ALERT "called onebyte_read: %zu, %lld\n", count, *f_pos);
+	if (count == 0 || *f_pos > 0)
+		return 0;
+
+	if (copy_to_user(buf, onebyte_data, 1))
+		return -EFAULT;
+
+	*f_pos += 1;
+	return 1;
 }
 
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
 	printk(KERN_ALERT "called onebyte_write");
-	/*if (count) {
-		*onebyte_data = *buf;
-		if (count > 1)
-			return -ENOSPC;
-		else
-			return 1;
-	}*/
-	return -ENOSPC;
+	if (count == 0)
+		return 0;
+	if (*f_pos > 0)
+		return -ENOSPC;
+
+	copy_from_user(onebyte_data, buf, 1);
+	*f_pos += 1;
+
+	if (count > 1)
+		return -ENOSPC;
+	else
+		return 1;
 }
 
 static char *who = "default";
