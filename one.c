@@ -6,7 +6,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
-//#include <asm/uaccess.h>
+#include <asm/uaccess.h>
 
 #define MAJOR_NUMBER 61
 
@@ -20,7 +20,7 @@ static void onebyte_exit(void);
 /* definition of file_operation structure */
 struct file_operations onebyte_fops = {
 	read: onebyte_read,
-	write: onebyte_write,
+	//write: onebyte_write,
 	open: onebyte_open,
 	release: onebyte_release
 };
@@ -39,12 +39,26 @@ int onebyte_release(struct inode *inode, struct file *filep)
 
 ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
-/*please complete the function on your own*/
+	ssize_t bytes = 0;
+	printk(KERN_ALERT "called onebyte_read");
+	if (count) {
+		copy_to_user(buf, onebyte_data, 1);
+		++bytes;
+	}
+	return bytes;
 }
 
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
-/*please complete the function on your own*/
+	printk(KERN_ALERT "called onebyte_write");
+	/*if (count) {
+		*onebyte_data = *buf;
+		if (count > 1)
+			return -ENOSPC;
+		else
+			return 1;
+	}*/
+	return -ENOSPC;
 }
 
 static char *who = "default";
